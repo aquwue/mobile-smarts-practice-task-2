@@ -1,0 +1,57 @@
+@[Alias = "Приемка по заданию"]
+@[ClientCreating = false]
+@[AutoCreateNewDocument = false]
+@[AutoStartNewDocumentCreation = false]
+@[AutoStartNewDocumentCreationForEmptyList = false]
+@[ManualDocumentSelection = true]
+@[BarcodeDocumentSelection = true]
+@[AutoOpenSingleDocument = false]
+@[AllowRemoveDocuments = false]
+@[InaccessibleForDocumentAbsence = true]
+@[RunDataExchangeOnDocumentCompleted = true]
+@[ShowDocumentsFromServerInList = true]
+@[ShowInProcessServerDocuments = true]
+type Receiving of Document
+{
+    // Поля шапки хранят состояние конкретного назначенного документа.
+    string SealNumber
+    string CurrentBoxBarcode
+    int BoxDepth
+    bool ShowTaskDuringScanning
+    bool ManualQuantityInput
+    bool ReceivingSettingsInitialized
+    string UiErrorMessage
+    string UiSuccessMessage
+
+    /// Главный сценарий приемки.
+    client function DocumentEditResult Edit(User currentUser, UserGroup currentGroup)
+    {
+        this.InitializeReceivingSettings()
+        this.ClearInlineMessage()
+
+        if (this.CreatedOnPDA)
+        {
+            this.SetInlineError(
+                "Создание приемки на терминале запрещено. Откройте назначенный документ."
+            )
+            return DocumentEditResult.Release
+        }
+
+        if (this.ExpectedLines.Count == 0)
+        {
+            this.SetInlineError(
+                "В назначенном документе нет товарного задания."
+            )
+            return DocumentEditResult.Abort
+        }
+
+        if (this.IsAssignmentComplete())
+        {
+            GO.ShowBaloon("Задание уже выполнено.", 2500, false)
+            return DocumentEditResult.OK
+        }
+
+        return this.OpenReceivingMenu()
+    }
+
+}

@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Environment xmlns:clr="http://schemas.cleverence.ru/clr" androidClientVersion="4.0.0.0" askReleaseDocumentsOnLogoff="False" autoReleaseDocuments="False" barcodeLogin="True" clientVersion="4.0.0.0" comment="" designerVersion="4.0.0.0" exitPassword="3203741232" id="3145163515" lastUpdate="2024-06-26T11:25:14.7888105+03:00" name="Empty app" ownerUserMachineName="Cleverence" ownerUserName="Cleverence" schemaVersion="4.0.3.0" serverVersion="4.0.0.0" showDetailedMessages="False" showServerDocumentsCount="False" useBaloons="True" version="2518364590">
+  <CommonFields />
+  <DocumentTypes />
+  <Operations />
+  <Tables />
+  <TestOperations />
+</Environment>

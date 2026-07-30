@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Erston: Build",
+      "type": "process",
+      "command": "C:\\Users\\aleksandrpyatakov\\.vscode\\extensions\\erston.erston-0.9.0\\compiler\\win-x64\\erston.exe",
+      "args": [
+        "--locale",
+        "ru",
+        "--no-color",
+        "build",
+        "-i",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
+      "label": "Erston: Build and deploy",
+      "type": "process",
+      "command": "C:\\Users\\aleksandrpyatakov\\.vscode\\extensions\\erston.erston-0.9.0\\compiler\\win-x64\\erston.exe",
+      "args": [
+        "--locale",
+        "ru",
+        "--no-color",
+        "build",
+        "--deploy",
+        "-i",
+        "${workspaceFolder}",
+        "--connection-string",
+        "http://localhost:10503/545x0p989rqz"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
+      "label": "Mobile SMARTS: Start emulator",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "if (-not (Get-Process WinClient -ErrorAction SilentlyContinue)) { Start-Process 'C:\\Program Files (x86)\\Cleverence\\Platform\\4.0.2.52878\\WinClient\\WinClient.exe' -ArgumentList 'http://localhost:10503/545x0p989rqz' }"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    }
+  ]
+}

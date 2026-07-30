@@ -1,0 +1,28 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{erst,erston}]
+indent_size = 4
+max_line_length = 120
+
+[*.{html,htm,css}]
+indent_size = 2
+
+[*.{json,xml}]
+indent_size = 2
+
+[AppDescription.xml]
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+[*.md]
+trim_trailing_whitespace = false

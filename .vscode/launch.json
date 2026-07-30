@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "erston",
+      "request": "launch",
+      "name": "Erston: Debug in Mobile SMARTS emulator",
+      "preLaunchTask": "Erston: Build and deploy",
+      "_projectPath": "${workspaceFolder}",
+      "targetHost": "127.0.0.1",
+      "targetPort": 6891,
+      "callbackPort": 6890,
+      "databaseId": "545x0p989rqz",
+      "stopOnEntry": false
+    }
+  ]
+}

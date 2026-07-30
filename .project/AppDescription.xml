@@ -1,0 +1,14 @@
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+  <SignedInfo>
+    <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+    <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+    <Reference URI="#sign">
+      <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+      <DigestValue>RbZ4rrHVa3ZnM21rgOzy9Ibrpi0=</DigestValue>
+    </Reference>
+  </SignedInfo>
+  <SignatureValue>eYI4Ybky4Mcb7CvhjrsBuGXsjVocZ145e2EbZKGIky9V3rrElpPs7V7mrGmFEOszHJ2rrwvXcHjsnwS3V3pGUjlnMcG+Iacxo9UJP6i7OnPUwcvzPOUsls4DOE7xdPEORQ4bAmelpJwoA5JTE2vE/sdOm60/TFB6TMhx93XIw+0=</SignatureValue>
+  <Object Id="sign">
+    <AppDescription xmlns:clr="http://schemas.cleverence.ru/clr" appId="2ADE66F2-4D69-4011-BCA0-DC4AD38A3F81" appName="Empty app" appVersion="1.0.5.0" comment="Empty app. Can be used for creating your own app." configId="00000000-0000-0000-0000-000000000000" minPlatformVersion="4.0.0.0" minPlatform35Version="4.0.0.0" xmlns="" />
+  </Object>
+</Signature>

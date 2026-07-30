@@ -1,0 +1,10 @@
+# Build output
+output/
+*.mstmpl
+
+# Decompiled sources
+.decompiled/
+
+# Project cache and local config
+.erston/.env
+.erston/cache.json

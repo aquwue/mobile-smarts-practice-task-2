@@ -1,0 +1,18 @@
+{
+  "name": "Erston",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "erston.erston"
+      ],
+      "settings": {
+        "erston.build.connectionString": "http://cleverence:80/dev"
+      }
+    }
+  },
+  "forwardPorts": [10501],
+  "postCreateCommand": "dotnet --version"
+}

@@ -1,0 +1,2 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServerOperationConnector xmlns:clr="http://schemas.cleverence.ru/clr" enabled="True" id="ServerOperationConnector" timeout="0" timeoutBehavaior="ThrowException" />

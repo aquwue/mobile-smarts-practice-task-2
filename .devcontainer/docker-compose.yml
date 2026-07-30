@@ -1,0 +1,19 @@
+services:
+  dev:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+
+  cleverence:
+    image: cleverence1/platform4:latest
+    ports:
+      - "10501:80"
+    volumes:
+      - cleverence-data:/app/AppData/Database
+    environment:
+      - InstanceId=dev
+      - DataService__ExternalServerUrl=http://localhost:10501/dev
+
+volumes:
+  cleverence-data:

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<extract>
+    <delete>Configuration\DocumentTypes</delete>
+    <delete>Configuration\Metadata</delete>
+    <delete>Configuration\Operations</delete>
+    <delete>Settings_Default</delete>
+    <item>Configuration\DocumentTypes</item>
+    <item>Configuration\Metadata</item>
+    <item>Configuration\Operations</item>
+    <item>Configuration\Environment.mslx</item>
+    <item>Settings_Default</item>
+    <item>AppDescription.xml</item>
+    <item>OnRemoteInstall.xml</item>
+    <item>OnUpdate.xml</item>
+</extract>
