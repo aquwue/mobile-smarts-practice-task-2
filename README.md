@@ -6,8 +6,8 @@
 
 Код документа разделен на две независимые части:
 
-- `src/documents/part-1/ReceivingWorkflow.erst` — алгоритм приемки;
-- `src/documents/part-2/ReceivingInterface.erst` — интерфейс и управление.
+- `src/documents/ReceivingWorkflow.erst` — алгоритм приемки;
+- `src/documents/ReceivingInterface.erst` — интерфейс и управление.
 
 Готовые архивы для двух веток находятся в каталоге `team-split`.
 Полный порядок работы и список файлов описаны в `TEAM_SPLIT.md`.

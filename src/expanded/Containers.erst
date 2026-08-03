@@ -1,0 +1,30 @@
+/// Пломба приемки: 001 + четырехзначный номер.
+@[Barcode = "001{ContainerCode:@[0-9]{4}}"]
+type ReceivingSealContainer of Container
+{
+    ContainerData
+    {
+        string ContainerCode
+    }
+
+    function string GetReceivingBarcode()
+    {
+        return this.Barcode
+    }
+}
+
+/// Коробка приемки: 00 + цифра, отличная от 1, + четырехзначный номер.
+@[Barcode = "00{ContainerKind:@[02-9]{1}}{ContainerCode:@[0-9]{4}}"]
+type ReceivingBoxContainer of Container
+{
+    ContainerData
+    {
+        string ContainerKind
+        string ContainerCode
+    }
+
+    function string GetReceivingBarcode()
+    {
+        return this.Barcode
+    }
+}

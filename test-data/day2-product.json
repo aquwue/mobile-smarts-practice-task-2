@@ -1,0 +1,21 @@
+[
+  {
+    "id": "DAY2-PRODUCT-001",
+    "name": "Тестовый товар для приемки",
+    "marking": "DAY2-001",
+    "basePackingId": "DAY2-UOM-001",
+    "barcode": "4600000000015",
+    "packings": [
+      {
+        "id": "DAY2-UOM-001",
+        "name": "шт",
+        "marking": "шт",
+        "barcode": "4600000000015",
+        "barcodes": [
+          "4600000000015"
+        ],
+        "unitsQuantity": 1
+      }
+    ]
+  }
+]

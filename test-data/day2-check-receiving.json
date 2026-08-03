@@ -1,0 +1,55 @@
+[
+  {
+    "id": "DAY2-RECEIVING-CHECK-001",
+    "name": "Проверка проекта - 3 товара, 9 грузомест",
+    "appointment": "Terminal",
+    "documentTypeName": "Receiving",
+    "modified": false,
+    "inProcess": false,
+    "finished": false,
+    "barcode": "DAY2-RECEIVING-CHECK-001",
+    "priority": 200,
+    "description": "Полный тест приемки: повторные сканы, партии, коробки и ручное закрытие",
+    "autoAppointed": true,
+    "serverHosted": false,
+    "declaredItems": [
+      {
+        "uid": "DAY2-CHECK-LINE-002",
+        "productId": "DAY2-PRODUCT-002",
+        "packingId": "DAY2-UOM-002",
+        "productName": "Тестовый товар 1 - Вода",
+        "packingName": "шт",
+        "productBarcode": "4600000000022",
+        "productMarking": "DAY2-002",
+        "packingUnitsQuantity": 1,
+        "declaredQuantity": 4,
+        "currentQuantity": 0
+      },
+      {
+        "uid": "DAY2-CHECK-LINE-003",
+        "productId": "DAY2-PRODUCT-003",
+        "packingId": "DAY2-UOM-003",
+        "productName": "Тестовый товар 2 - Сок",
+        "packingName": "шт",
+        "productBarcode": "4600000000039",
+        "productMarking": "DAY2-003",
+        "packingUnitsQuantity": 1,
+        "declaredQuantity": 3,
+        "currentQuantity": 0
+      },
+      {
+        "uid": "DAY2-CHECK-LINE-004",
+        "productId": "DAY2-PRODUCT-004",
+        "packingId": "DAY2-UOM-004",
+        "productName": "Тестовый товар 3 - Печенье",
+        "packingName": "шт",
+        "productBarcode": "4600000000046",
+        "productMarking": "DAY2-004",
+        "packingUnitsQuantity": 1,
+        "declaredQuantity": 2,
+        "currentQuantity": 0
+      }
+    ],
+    "currentItems": []
+  }
+]

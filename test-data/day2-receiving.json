@@ -1,0 +1,31 @@
+[
+  {
+    "id": "DAY2-RECEIVING-001",
+    "name": "Тестовая приемка по заданию",
+    "appointment": "Terminal",
+    "documentTypeName": "Receiving",
+    "modified": false,
+    "inProcess": false,
+    "finished": false,
+    "barcode": "DAY2-RECEIVING-001",
+    "priority": 100,
+    "description": "Тестовый документ для проверки задания дня 2",
+    "autoAppointed": true,
+    "serverHosted": false,
+    "declaredItems": [
+      {
+        "uid": "DAY2-LINE-001",
+        "productId": "DAY2-PRODUCT-001",
+        "packingId": "DAY2-UOM-001",
+        "productName": "Тестовый товар для приемки",
+        "packingName": "шт",
+        "productBarcode": "4600000000015",
+        "productMarking": "DAY2-001",
+        "packingUnitsQuantity": 1,
+        "declaredQuantity": 5,
+        "currentQuantity": 0
+      }
+    ],
+    "currentItems": []
+  }
+]

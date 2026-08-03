@@ -1,0 +1,544 @@
+expand Receiving
+{
+    /// Запрашивает номер пломбы до начала работы с коробками и товарами.
+    client function EnsureSealNumber()
+    {
+        if (this.SealNumber != "")
+        {
+            return
+        }
+
+        this.ClearInlineMessage()
+
+        this.SealNumber = this.PromptReceivingContainerNumber(
+            title = "Пломба",
+            welcomeText = "Отсканируйте или введите номер пломбы",
+            requireSeal = true
+        )
+        on fail
+        {
+            fail
+        }
+    }
+
+    /// Запрашивает коробку, если текущая коробка еще не выбрана.
+    client function EnsureCurrentBox()
+    {
+        if (this.CurrentBoxBarcode != "")
+        {
+            return
+        }
+
+        this.ClearInlineMessage()
+
+        while (this.CurrentBoxBarcode == "")
+        {
+            var boxBarcode = this.PromptReceivingContainerNumber(
+                title = "Новая коробка",
+                welcomeText = "Отсканируйте номер коробки",
+                requireSeal = false
+            )
+            on fail
+            {
+                fail
+            }
+
+            var previousBoxLines = select from this.ActualLines
+                where Item.BoxBarcode == boxBarcode
+
+            if (previousBoxLines.Count > 0)
+            {
+                this.SetInlineError(
+                    "Коробка '{boxBarcode}' уже использовалась в этом документе."
+                )
+            }
+            else
+            {
+                this.CurrentBoxBarcode = boxBarcode
+                this.SetInlineSuccess("Коробка '{boxBarcode}' открыта.")
+            }
+        }
+    }
+
+    /// Выбирает пломбу или коробку через систему контейнеров Mobile SMARTS.
+    client function string PromptReceivingContainerNumber(
+        string title,
+        string welcomeText,
+        bool requireSeal
+    )
+    {
+        while (true)
+        {
+            object firstStorage
+            object selectedPallet
+            object ssccPallet
+            object secondStorage
+            string scannedBarcode
+            BarcodeData barcodeData
+
+            (
+                firstStorage,
+                selectedPallet,
+                ssccPallet,
+                secondStorage,
+                scannedBarcode,
+                barcodeData
+            ) = SelectContainer(
+                Title = title,
+                WelcomeText = welcomeText,
+                HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+                SelectingStorage = StorageType.SSCC,
+                CheckInDocument = false,
+                SetForBuffer = false,
+                CanSelectCell = false,
+                CanSelectPallet = true,
+                NotExistedCellErrorText = requireSeal
+                    ? "Номер не соответствует контейнеру пломбы."
+                    : "Номер не соответствует контейнеру коробки.",
+                NotFoundInDocErrorText = "",
+                Controls = [
+                    new Control {
+                        Key = Keys.Escape,
+                        Action = cancel
+                    }
+                ],
+                SaveInHistory = true
+            )
+            on cancel
+            {
+                fail
+            }
+            on return
+            {
+            }
+
+            ReceivingSealContainer seal =
+                ssccPallet as ReceivingSealContainer
+
+            if (seal == null)
+            {
+                seal = selectedPallet as ReceivingSealContainer
+            }
+
+            if (seal == null)
+            {
+                seal = firstStorage as ReceivingSealContainer
+            }
+
+            if (seal == null)
+            {
+                seal = secondStorage as ReceivingSealContainer
+            }
+
+            ReceivingBoxContainer box =
+                ssccPallet as ReceivingBoxContainer
+
+            if (box == null)
+            {
+                box = selectedPallet as ReceivingBoxContainer
+            }
+
+            if (box == null)
+            {
+                box = firstStorage as ReceivingBoxContainer
+            }
+
+            if (box == null)
+            {
+                box = secondStorage as ReceivingBoxContainer
+            }
+
+            if (seal == null && box == null)
+            {
+                this.SetInlineError(
+                    requireSeal
+                        ? "Номер не соответствует контейнеру пломбы."
+                        : "Номер не соответствует контейнеру коробки."
+                )
+            }
+            else if (requireSeal && seal == null)
+            {
+                this.SetInlineError("Это не пломба.")
+            }
+            else if (requireSeal == false && box == null)
+            {
+                this.SetInlineError("Это не коробка.")
+            }
+            else if (requireSeal)
+            {
+                return seal.GetReceivingBarcode()
+            }
+            else
+            {
+                return box.GetReceivingBarcode()
+            }
+        }
+    }
+
+    /// Основной экран сканирования назначенных товаров.
+    client function DocumentEditResult ScanAssignedGoods()
+    {
+        this.ClearInlineMessage()
+
+        string scanInput
+        string enteredScanInput
+        string pendingBarcodeText
+        var taskLines = select from this.ExpectedLines
+            where this.ShowTaskDuringScanning
+        var boxPlaces = this.CurrentBoxPositionCount()
+        var canCloseBox = this.CanCloseCurrentBoxManually()
+
+        (DocumentItem _selectedTaskLine, enteredScanInput, BarcodeData scannedBarcode) = EditField(
+            EditType = FieldEditType.Session,
+            FieldType = TypeCode.String,
+            Field = scanInput,
+            Title = "Приемка по заданию",
+            WelcomeText = "Сканируйте штрихкод товара",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b><br/><b>Пломба:</b> {this.SealNumber}<br/><b>Коробка:</b> {this.CurrentBoxBarcode}",
+            FooterText = "Грузомест в коробке: <b>{boxPlaces}/{this.BoxDepth}</b>",
+            DataSource = taskLines,
+            ShowList = true,
+            ShowEditBox = true,
+            Columns = [
+                new ItemsColumn {
+                    Title = "Наименование",
+                    Format = "{Item.InventoryItemName}",
+                    Width = new Length {
+                        Value = 70,
+                        Units = LengthUnits.Percents
+                    }
+                },
+                new ItemsColumn {
+                    Title = "Факт/План",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.ActualQuantity}/{Item.ExpectedQuantity} шт",
+                    Width = new Length {
+                        Value = 30,
+                        Units = LengthUnits.Percents
+                    }
+                }
+            ],
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Action = scan
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = back_to_menu
+                },
+                new Control {
+                    DisplayText = "Закрыть коробку",
+                    Action = close_box,
+                    ViewType = ControlViewType.InMenu,
+                    Visible = canCloseBox
+                }
+            ],
+            SaveInHistory = true
+        )
+        on scan
+        {
+            if (scannedBarcode == null)
+            {
+                undo
+            }
+
+            pendingBarcodeText = scannedBarcode.BarcodeRaw
+        }
+        on return
+        {
+            if (enteredScanInput != null && enteredScanInput != "")
+            {
+                pendingBarcodeText = enteredScanInput
+                enteredScanInput = null
+                scanInput = null
+            }
+            else if (scanInput != null && scanInput != "")
+            {
+                pendingBarcodeText = scanInput
+                scanInput = null
+            }
+            else if (_selectedTaskLine != null)
+            {
+                this.ViewProductBatches(
+                    _selectedTaskLine.InventoryItemId,
+                    _selectedTaskLine.InventoryItemName
+                )
+                back
+            }
+            else
+            {
+                undo
+            }
+        }
+        on back_to_menu
+        {
+            this.ClearInlineMessage()
+            return DocumentEditResult.Abort
+        }
+        on close_box
+        {
+            if (this.CanCloseCurrentBoxManually() == false)
+            {
+                this.SetInlineError(
+                    "Ручное закрытие разрешено только при {this.BoxDepth - 2} грузоместах."
+                )
+                undo
+            }
+
+            this.CloseCurrentBox(
+                "Коробка закрыта вручную. Отсканируйте следующую коробку."
+            )
+            this.EnsureCurrentBox()
+            on fail
+            {
+                this.ClearInlineMessage()
+                return DocumentEditResult.Abort
+            }
+            this.ClearInlineMessage()
+            boxPlaces = this.CurrentBoxPositionCount()
+            canCloseBox = this.CanCloseCurrentBoxManually()
+            back
+        }
+
+        while (pendingBarcodeText != null && pendingBarcodeText != "")
+        {
+            this.EnsureCurrentBox()
+            on fail
+            {
+                this.ClearInlineMessage()
+                pendingBarcodeText = null
+                return DocumentEditResult.Abort
+            }
+
+            if (this.CurrentBoxPositionCount() >= this.BoxDepth)
+            {
+                this.CloseCurrentBox(
+                    "Коробка заполнена. Упакуйте ее и отсканируйте следующую коробку."
+                )
+                this.EnsureCurrentBox()
+                on fail
+                {
+                    this.ClearInlineMessage()
+                    pendingBarcodeText = null
+                    return DocumentEditResult.Abort
+                }
+                this.ClearInlineMessage()
+            }
+
+            var record = this.ResolveInventoryRecord(pendingBarcodeText)
+            on fail
+            {
+                this.SetInlineError(
+                    "Штрихкод не найден. Товар не может быть добавлен."
+                )
+                pendingBarcodeText = null
+                break
+            }
+
+            var recordLines = select from this.ExpectedLines
+                where Item.InventoryItemId == record.InventoryItemId
+
+            if (recordLines.Count == 0)
+            {
+                this.SetInlineError(
+                    "Товар отсутствует в задании. Размещение запрещено."
+                )
+                pendingBarcodeText = null
+                break
+            }
+
+            if (this.ManualQuantityInput)
+            {
+                this.ClearInlineMessage()
+                this.EnterManualQuantity(record)
+                on fail
+                {
+                    pendingBarcodeText = null
+                    break
+                }
+            }
+            else
+            {
+                record.Quantity = 1
+            }
+
+            this.ClearInlineMessage()
+            record.BatchNumber = this.PromptRequiredValue(
+                title = "Номер партии",
+                welcomeText = "Введите номер партии для '{record.Name}'",
+                emptyError = "Номер партии обязателен."
+            )
+            on fail
+            {
+                pendingBarcodeText = null
+                break
+            }
+
+            record.BoxBarcode = this.CurrentBoxBarcode
+            record.CargoPlaceId = GO.CreateUid()
+            record.BoxClosed = false
+
+            this.CommitAssignedRecord(record)
+            on fail
+            {
+                break
+            }
+
+            this.SetInlineSuccess(
+                "'{record.Name}' размещен в коробке '{this.CurrentBoxBarcode}'."
+            )
+
+            if (this.IsAssignmentComplete())
+            {
+                this.CloseCurrentBox("Все товары по заданию размещены.")
+                GO.ShowBaloon("Документ полностью выполнен.", 3000, false)
+                return DocumentEditResult.OK
+            }
+
+            if (this.CurrentBoxPositionCount() >= this.BoxDepth)
+            {
+                this.CloseCurrentBox(
+                    "Коробка заполнена. Упакуйте ее и отсканируйте следующую коробку."
+                )
+                this.EnsureCurrentBox()
+                on fail
+                {
+                    this.ClearInlineMessage()
+                    pendingBarcodeText = null
+                    return DocumentEditResult.Abort
+                }
+                this.ClearInlineMessage()
+            }
+
+            pendingBarcodeText = null
+        }
+
+        taskLines = select from this.ExpectedLines
+            where this.ShowTaskDuringScanning
+        boxPlaces = this.CurrentBoxPositionCount()
+        canCloseBox = this.CanCloseCurrentBoxManually()
+        back
+    }
+
+    /// Ищет товар по каталогу, не создавая неизвестную номенклатуру.
+    client function InventoryItemRecord ResolveInventoryRecord(string barcodeText)
+    {
+        (InventoryItemRecord selectedRecord, string _unusedSearchText, BarcodeData _unusedBarcode) = ScanAndSearch(
+            CanSelectPallet = false,
+            CanSelectCell = false,
+            BarcodeConvertion = StringConvertionType.None,
+            ProcessSessionBarcode = true,
+            BarcodeSessionVariable = barcodeText,
+            IgnoreBaseBarcodes = false,
+            QuickSelectInventoryItem = false,
+            Title = "Поиск товара",
+            WelcomeText = "Сканируйте штрихкод товара",
+            NotFoundErrorText = "",
+            SelectionListFormat = "<div><b>{Item.Name}</b><br/>{Item.InventoryItemId}</div>",
+            CanManualShowInventoryItemsList = false,
+            AutoShowSelectionList = true,
+            AutoSelectSingleInventoryItem = true,
+            PlayAudioOnError = false,
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = cancel
+                }
+            ],
+            SaveInHistory = false
+        )
+        on cancel
+        {
+            fail
+        }
+        on return
+        {
+        }
+
+        if (selectedRecord == null)
+        {
+            fail
+        }
+
+        return selectedRecord
+    }
+
+    /// Ручной ввод количества для одной товарной позиции.
+    client function EnterManualQuantity(InventoryItemRecord record)
+    {
+        (string _unusedQuantityText, BarcodeData _unusedNextBarcode) = EnterQuantity(
+            InventoryItemRecord = record,
+            Title = "Количество",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b><br/>{record.Name}",
+            WelcomeText = "Введите количество",
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = cancel
+                }
+            ],
+            SaveInHistory = false
+        )
+        on cancel
+        {
+            fail
+        }
+        on return
+        {
+        }
+
+        if (record.Quantity <= 0)
+        {
+            this.SetInlineError(
+                "Количество должно быть больше нуля."
+            )
+            fail
+        }
+    }
+
+    /// Записывает факт с немедленной проверкой принадлежности заданию и количества.
+    client function CommitAssignedRecord(InventoryItemRecord record)
+    {
+        var selectedProduct = record
+        var recordLines = select from this.ExpectedLines
+            where Item.InventoryItemId == record.InventoryItemId
+
+        DocumentItemCollection changedActualLines
+        DocumentItemCollection changedExpectedLines
+
+        (changedActualLines, changedExpectedLines) = CommitInventoryRecord(
+            ExpectedLines = recordLines,
+            ComparingFieldNamesForActualLines = [
+                "InventoryItemId",
+                "UnitOfMeasureId",
+                "BatchNumber",
+                "BoxBarcode",
+                "CargoPlaceId"
+            ],
+            IgnoreFieldsInDocument = true,
+            CombineEqualActualLines = false,
+            CheckQuantity = true,
+            CheckDocumentInfill = false,
+            ErrorQuantityMessage = "Нельзя разместить больше товара, чем указано в задании.",
+            NoInventoryItemInDocumentMessage = "Товар отсутствует в задании."
+        )
+
+        if (changedActualLines == null)
+        {
+            this.SetInlineError(
+                "Не удалось записать товар в документ."
+            )
+            fail
+        }
+    }
+
+}

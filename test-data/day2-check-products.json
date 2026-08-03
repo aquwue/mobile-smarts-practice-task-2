@@ -1,0 +1,59 @@
+[
+  {
+    "id": "DAY2-PRODUCT-002",
+    "name": "Тестовый товар 1 - Вода",
+    "marking": "DAY2-002",
+    "basePackingId": "DAY2-UOM-002",
+    "barcode": "4600000000022",
+    "packings": [
+      {
+        "id": "DAY2-UOM-002",
+        "name": "шт",
+        "marking": "шт",
+        "barcode": "4600000000022",
+        "barcodes": [
+          "4600000000022"
+        ],
+        "unitsQuantity": 1
+      }
+    ]
+  },
+  {
+    "id": "DAY2-PRODUCT-003",
+    "name": "Тестовый товар 2 - Сок",
+    "marking": "DAY2-003",
+    "basePackingId": "DAY2-UOM-003",
+    "barcode": "4600000000039",
+    "packings": [
+      {
+        "id": "DAY2-UOM-003",
+        "name": "шт",
+        "marking": "шт",
+        "barcode": "4600000000039",
+        "barcodes": [
+          "4600000000039"
+        ],
+        "unitsQuantity": 1
+      }
+    ]
+  },
+  {
+    "id": "DAY2-PRODUCT-004",
+    "name": "Тестовый товар 3 - Печенье",
+    "marking": "DAY2-004",
+    "basePackingId": "DAY2-UOM-004",
+    "barcode": "4600000000046",
+    "packings": [
+      {
+        "id": "DAY2-UOM-004",
+        "name": "шт",
+        "marking": "шт",
+        "barcode": "4600000000046",
+        "barcodes": [
+          "4600000000046"
+        ],
+        "unitsQuantity": 1
+      }
+    ]
+  }
+]
