@@ -1,0 +1,26 @@
+expand Document
+{
+    expand DocumentItem
+    {
+        string BatchNumber
+        string BoxBarcode
+        string CargoPlaceId
+        bool BoxClosed
+
+        /// Количество товара в одной группе «коробка + партия».
+        decimal GroupedBoxBatchQuantity {
+            (select from this.Document.ActualLines
+                where Item.InventoryItemId == this.InventoryItemId && \
+                    Item.BoxBarcode == this.BoxBarcode && \
+                    Item.BatchNumber == this.BatchNumber).ActualQuantity
+        }
+    }
+
+    expand InventoryItemRecord
+    {
+        string BatchNumber
+        string BoxBarcode
+        string CargoPlaceId
+        bool BoxClosed
+    }
+}
