@@ -24,7 +24,7 @@
 
 Основные файлы:
 
-- `src/documents/part-1/ReceivingWorkflow.erst` — 544 строки;
+- `src/documents/ReceivingWorkflow.erst` — 544 строки;
 - `src/expanded/Containers.erst` — типы контейнеров пломбы и коробки;
 - `test-data/day2-product.json`;
 - `test-data/day2-receiving.json`;
@@ -49,7 +49,7 @@
 
 Основные файлы:
 
-- `src/documents/part-2/ReceivingInterface.erst` — 579 строк;
+- `src/documents/ReceivingInterface.erst` — 579 строк;
 - `src/expanded/DocumentItem.erst`;
 - `test-data/day2-interface-check-002.json` … `day2-interface-check-008.json`;
 - `test-data/install-test-documents.ps1`.
@@ -79,9 +79,11 @@
    ```
 
 3. Первый разработчик добавляет файлы из архива `part-1-workflow.zip` в ветку
-   `feature/receiving-workflow`.
+   `feature/receiving-workflow`. Архив распаковывается прямо в корень проекта;
+   дополнительная папка `part-1` не создается.
 4. Второй разработчик добавляет файлы из архива `part-2-interface.zip` в ветку
-   `feature/receiving-interface`.
+   `feature/receiving-interface`. Архив распаковывается прямо в корень проекта;
+   дополнительная папка `part-2` не создается.
 5. Каждый делает отдельный коммит и отправляет ветку:
 
    ```bash
