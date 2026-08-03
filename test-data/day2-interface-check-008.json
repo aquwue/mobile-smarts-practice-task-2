@@ -1,0 +1,31 @@
+[
+  {
+    "id": "DAY2-RECEIVING-CHECK-008",
+    "name": "Тестовый документ №8 - проверка контейнеров",
+    "appointment": "Terminal",
+    "documentTypeName": "Receiving",
+    "modified": false,
+    "inProcess": false,
+    "finished": false,
+    "barcode": "DAY2-RECEIVING-CHECK-008",
+    "priority": 200,
+    "description": "Чистый документ для проверки форматов номера пломбы и номера коробки",
+    "autoAppointed": true,
+    "serverHosted": false,
+    "declaredItems": [
+      {
+        "uid": "DAY2-CHECK-008-LINE-001",
+        "productId": "DAY2-PRODUCT-002",
+        "packingId": "DAY2-UOM-002",
+        "productName": "Тестовый товар 1 - Вода",
+        "packingName": "шт",
+        "productBarcode": "4600000000022",
+        "productMarking": "DAY2-002",
+        "packingUnitsQuantity": 1,
+        "declaredQuantity": 2,
+        "currentQuantity": 0
+      }
+    ],
+    "currentItems": []
+  }
+]

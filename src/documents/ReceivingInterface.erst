@@ -1,0 +1,579 @@
+expand Receiving
+{
+    /// Главное меню документа. Все основные действия доступны сразу после входа.
+    client function DocumentEditResult OpenReceivingMenu()
+    {
+        Menu(
+            Title = "Приемка по заданию",
+            WelcomeText = "Выберите действие",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+            Buttons = [
+                new Control {
+                    DisplayText = "Сканировать товар",
+                    Action = scan_goods
+                },
+                new Control {
+                    DisplayText = "Просмотр набранного",
+                    Action = picked_goods
+                },
+                new Control {
+                    DisplayText = "Настройки",
+                    Action = box_settings
+                },
+                new Control {
+                    DisplayText = "Временный выход",
+                    Action = temporary_exit
+                }
+            ],
+            Controls = [
+                new Control {
+                    Key = Keys.Escape,
+                    Action = temporary_exit
+                },
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                }
+            ],
+            SaveInHistory = true
+        )
+        on scan_goods
+        {
+            this.ClearInlineMessage()
+
+            this.EnsureSealNumber()
+            on fail
+            {
+                this.ClearInlineMessage()
+                back
+            }
+
+            this.EnsureCurrentBox()
+            on fail
+            {
+                this.ClearInlineMessage()
+                back
+            }
+
+            var scanResult = this.ScanAssignedGoods()
+            if (scanResult == DocumentEditResult.OK)
+            {
+                return DocumentEditResult.OK
+            }
+
+            this.ClearInlineMessage()
+            back
+        }
+        on picked_goods
+        {
+            this.ClearInlineMessage()
+            this.ViewPickedGoods()
+            this.ClearInlineMessage()
+            back
+        }
+        on box_settings
+        {
+            this.ClearInlineMessage()
+            this.OpenReceivingSettings()
+            this.ClearInlineMessage()
+            back
+        }
+        on temporary_exit
+        {
+            if (this.CheckSupervisorPassword())
+            {
+                return DocumentEditResult.Abort
+            }
+
+            back
+        }
+    }
+
+    /// Устанавливает безопасные значения по умолчанию один раз на документ.
+    function InitializeReceivingSettings()
+    {
+        if (this.ReceivingSettingsInitialized == false)
+        {
+            this.BoxDepth = 10
+            this.ShowTaskDuringScanning = true
+            this.ManualQuantityInput = false
+            this.ReceivingSettingsInitialized = true
+        }
+
+        if (this.BoxDepth < 3)
+        {
+            this.BoxDepth = 10
+        }
+    }
+
+    /// Очищает строку состояния в верхней части экранов документа.
+    client function ClearInlineMessage()
+    {
+        this.UiErrorMessage = ""
+        this.UiSuccessMessage = ""
+    }
+
+    /// Показывает ошибку в заголовке следующего или повторно открытого экрана.
+    client function SetInlineError(string message)
+    {
+        this.UiErrorMessage = message
+        this.UiSuccessMessage = ""
+        GO.PlayError()
+    }
+
+    /// Показывает успешное действие в заголовке следующего или повторно открытого экрана.
+    client function SetInlineSuccess(string message)
+    {
+        this.UiErrorMessage = ""
+        this.UiSuccessMessage = message
+    }
+
+
+    /// Экран настроек текущего документа.
+    client function OpenReceivingSettings()
+    {
+        this.ClearInlineMessage()
+
+        var taskModeText = this.ShowTaskDuringScanning
+            ? "Режим работы: показывать задание"
+            : "Режим работы: скрывать задание"
+        var quantityModeText = this.ManualQuantityInput
+            ? "Количество: ручной ввод"
+            : "Количество: автоматически по 1"
+        var depthCanBeChanged = this.ActualLines.Count == 0
+
+        Menu(
+            Title = "Настройки",
+            WelcomeText = "Текущая глубина коробок: {this.BoxDepth}",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+            Buttons = [
+                new Control {
+                    DisplayText = "Глубина коробок: {this.BoxDepth}",
+                    Action = box_depth,
+                    Enabled = depthCanBeChanged
+                },
+                new Control {
+                    DisplayText = taskModeText,
+                    Action = task_mode
+                },
+                new Control {
+                    DisplayText = quantityModeText,
+                    Action = quantity_mode
+                },
+                new Control {
+                    DisplayText = "Вернуться к приемке",
+                    Action = close
+                }
+            ],
+            Controls = [
+                new Control {
+                    Key = Keys.Escape,
+                    Action = close
+                }
+            ],
+            SaveInHistory = true
+        )
+        on box_depth
+        {
+            if (this.ActualLines.Count > 0)
+            {
+                this.SetInlineError(
+                    "Глубину коробок нельзя менять после первого размещенного товара."
+                )
+                undo
+            }
+
+            this.EditBoxDepth()
+            on fail
+            {
+                undo
+            }
+            back
+        }
+        on task_mode
+        {
+            this.ShowTaskDuringScanning = this.ShowTaskDuringScanning == false
+            taskModeText = this.ShowTaskDuringScanning
+                ? "Режим работы: показывать задание"
+                : "Режим работы: скрывать задание"
+            back
+        }
+        on quantity_mode
+        {
+            this.ManualQuantityInput = this.ManualQuantityInput == false
+            quantityModeText = this.ManualQuantityInput
+                ? "Количество: ручной ввод"
+                : "Количество: автоматически по 1"
+            back
+        }
+        on close
+        {
+            this.ClearInlineMessage()
+            return
+        }
+    }
+
+    /// Редактирование глубины доступно только до первого товарного сканирования.
+    client function EditBoxDepth()
+    {
+        if (this.ActualLines.Count > 0)
+        {
+            this.SetInlineError(
+                "Глубину коробок нельзя менять после первого размещенного товара."
+            )
+            fail
+        }
+
+        int newDepth = this.BoxDepth
+
+        (object _unusedSelection, string _unusedInput, BarcodeData _unusedBarcode) = EditField(
+            EditType = FieldEditType.Session,
+            FieldType = TypeCode.Int32,
+            Field = newDepth,
+            Title = "Глубина коробок",
+            WelcomeText = "Введите максимальное число грузомест",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = cancel
+                }
+            ],
+            SaveInHistory = false
+        )
+        on cancel
+        {
+            fail
+        }
+        on return
+        {
+        }
+
+        if (newDepth < 3)
+        {
+            this.SetInlineError(
+                "Глубина коробки должна быть не меньше 3."
+            )
+            undo
+        }
+
+        this.BoxDepth = newDepth
+        this.SetInlineSuccess("Глубина коробки изменена: {newDepth}.")
+    }
+
+    /// Список всех собранных товарных позиций.
+    client function ViewPickedGoods()
+    {
+        this.ClearInlineMessage()
+
+        var taskLines = this.ExpectedLines
+
+        string selectionInput
+
+        (DocumentItem _selectedPickedLine, selectionInput, BarcodeData _unusedBarcode) = EditField(
+            EditType = FieldEditType.Session,
+            FieldType = TypeCode.String,
+            Field = selectionInput,
+            Title = "Просмотр набранного",
+            WelcomeText = "Нажмите на товар, чтобы увидеть партии и коробки",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+            DataSource = taskLines,
+            ShowList = true,
+            ShowEditBox = false,
+            Columns = [
+                new ItemsColumn {
+                    Title = "Наименование",
+                    Format = "{Item.InventoryItemName}",
+                    Width = new Length {
+                        Value = 45,
+                        Units = LengthUnits.Percents
+                    }
+                },
+                new ItemsColumn {
+                    Title = "Штрихкод",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.InventoryItemBarcode}",
+                    Width = new Length {
+                        Value = 25,
+                        Units = LengthUnits.Percents
+                    }
+                },
+                new ItemsColumn {
+                    Title = "Факт/План",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.ActualQuantity}/{Item.ExpectedQuantity} шт",
+                    Width = new Length {
+                        Value = 30,
+                        Units = LengthUnits.Percents
+                    }
+                }
+            ],
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = close
+                }
+            ],
+            SaveInHistory = true
+        )
+        on close
+        {
+            this.ClearInlineMessage()
+            return
+        }
+        on return
+        {
+            if (_selectedPickedLine == null)
+            {
+                undo
+            }
+
+            this.ViewProductBatches(
+                _selectedPickedLine.InventoryItemId,
+                _selectedPickedLine.InventoryItemName
+            )
+            back
+        }
+    }
+
+    /// Детализация выбранного товара по партиям и коробкам.
+    client function ViewProductBatches(string inventoryItemId, string inventoryItemName)
+    {
+        this.ClearInlineMessage()
+
+        var productLines = select from this.ActualLines
+            where Item.InventoryItemId == inventoryItemId
+            group by InventoryItemId, BoxBarcode, BatchNumber
+            order by BoxBarcode, BatchNumber
+        var expectedProductLines = select from this.ExpectedLines
+            where Item.InventoryItemId == inventoryItemId
+
+        string selectionInput
+
+        (DocumentItem _unusedSelection, selectionInput, BarcodeData _unusedBarcode) = EditField(
+            EditType = FieldEditType.Session,
+            FieldType = TypeCode.String,
+            Field = selectionInput,
+            Title = "Партии и коробки",
+            WelcomeText = "<b>{inventoryItemName}</b><br/>Партии и количество товара по коробкам",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b><br/>Собрано: {expectedProductLines.ActualQuantity}/{expectedProductLines.ExpectedQuantity} шт",
+            DataSource = productLines,
+            ShowList = true,
+            ShowEditBox = false,
+            Columns = [
+                new ItemsColumn {
+                    Title = "Номер партии",
+                    Format = "{Item.BatchNumber}",
+                    Width = new Length {
+                        Value = 35,
+                        Units = LengthUnits.Percents
+                    }
+                },
+                new ItemsColumn {
+                    Title = "Коробка",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.BoxBarcode}",
+                    Width = new Length {
+                        Value = 35,
+                        Units = LengthUnits.Percents
+                    }
+                },
+                new ItemsColumn {
+                    Title = "Количество",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.GroupedBoxBatchQuantity} шт",
+                    Width = new Length {
+                        Value = 30,
+                        Units = LengthUnits.Percents
+                    }
+                }
+            ],
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = close
+                }
+            ],
+            SaveInHistory = true
+        )
+        on close
+        {
+            this.ClearInlineMessage()
+            return
+        }
+        on return
+        {
+            back
+        }
+    }
+
+    /// Запрос обязательного строкового значения со сканера или клавиатуры.
+    client function string PromptRequiredValue(
+        string title,
+        string welcomeText,
+        string emptyError
+    )
+    {
+        string input
+        string enteredInput
+
+        (object _unusedSelection, enteredInput, BarcodeData valueBarcode) = EditField(
+            EditType = FieldEditType.Session,
+            FieldType = TypeCode.String,
+            Field = input,
+            Title = title,
+            WelcomeText = welcomeText,
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Action = scan
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = cancel
+                }
+            ],
+            SaveInHistory = true
+        )
+        on scan
+        {
+            if (valueBarcode == null)
+            {
+                undo
+            }
+
+            input = valueBarcode.BarcodeRaw
+        }
+        on return
+        {
+            if (enteredInput != null && enteredInput != "")
+            {
+                input = enteredInput
+            }
+        }
+        on cancel
+        {
+            fail
+        }
+
+        if (input == null || input == "")
+        {
+            this.SetInlineError(emptyError)
+            undo
+        }
+
+        return input
+    }
+
+    /// Временный выход разрешен только после ввода пароля руководителя.
+    client function bool CheckSupervisorPassword()
+    {
+        string password
+        string enteredPassword
+
+        (object _unusedSelection, enteredPassword, BarcodeData _unusedBarcode) = EditField(
+            EditType = FieldEditType.Session,
+            FieldType = TypeCode.String,
+            Field = password,
+            Title = "Подтверждение руководителя",
+            WelcomeText = "Введите пароль для временного выхода",
+            HeaderText = "<b color="Red" size="+1">{this.UiErrorMessage}</b><b color="Green" size="+1">{this.UiSuccessMessage}</b>",
+            Controls = [
+                new Control {
+                    Barcode = "\{any\}",
+                    Enabled = false
+                },
+                new Control {
+                    Key = Keys.Escape,
+                    Action = cancel
+                }
+            ],
+            SaveInHistory = false
+        )
+        on cancel
+        {
+            return false
+        }
+        on return
+        {
+        }
+
+        if (enteredPassword != null && enteredPassword != "")
+        {
+            password = enteredPassword
+        }
+
+        if (password == "2408")
+        {
+            return true
+        }
+
+        this.SetInlineError("Неверный пароль руководителя.")
+        return false
+    }
+
+    /// Число товарных позиций (грузомест) в текущей коробке.
+    function int CurrentBoxPositionCount()
+    {
+        if (this.CurrentBoxBarcode == "")
+        {
+            return 0
+        }
+
+        var boxLines = select from this.ActualLines
+            where Item.BoxBarcode == this.CurrentBoxBarcode
+
+        return boxLines.Count
+    }
+
+    /// Ручное закрытие возможно ровно за два грузоместа до полной коробки.
+    function bool CanCloseCurrentBoxManually()
+    {
+        if (this.CurrentBoxBarcode == "")
+        {
+            return false
+        }
+
+        return this.CurrentBoxPositionCount() == this.BoxDepth - 2
+    }
+
+    /// Помечает все позиции коробки закрытыми и сбрасывает контекст коробки.
+    client function CloseCurrentBox(string message)
+    {
+        if (this.CurrentBoxBarcode == "")
+        {
+            return
+        }
+
+        var boxLines = select from this.ActualLines
+            where Item.BoxBarcode == this.CurrentBoxBarcode
+
+        boxLines.BoxClosed = true
+        this.CurrentBoxBarcode = ""
+        this.SetInlineSuccess(message)
+    }
+
+    /// Задание завершено только при полном совпадении общего плана и факта.
+    function bool IsAssignmentComplete()
+    {
+        if (this.ExpectedLines.Count == 0)
+        {
+            return false
+        }
+
+        return this.ExpectedLines.ExpectedQuantity == this.ActualLines.ActualQuantity
+    }
+}
